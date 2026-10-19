@@ -264,12 +264,6 @@ h1{background:linear-gradient(180deg,#fff 40%,#8a8a8a);-webkit-background-clip:t
 .mq::-webkit-scrollbar-track{background:transparent}
 .mq .tk{animation:none!important;padding-inline:max(28px,calc((100vw - 1064px)/2),7vw)}
 .mq:focus-visible{outline:2px solid #fff;outline-offset:-2px}
-.arrows{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
-.mq.e+.arrows{display:none}
-.arrows button{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;padding:0 0 4px;font:inherit;font-size:26px;line-height:1;color:#fff;cursor:pointer;background:var(--gl);border:var(--glb);-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);box-shadow:var(--gls);transition:background .25s,transform .25s}
-.arrows button:hover{background:linear-gradient(135deg,rgba(255,255,255,.26),rgba(255,255,255,.1))}
-.arrows button:active{transform:scale(.94)}
-.arrows button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -290,13 +284,11 @@ h1{background:linear-gradient(180deg,#fff 40%,#8a8a8a);-webkit-background-clip:t
 <section id="work" class="">
  <p class="eyebrow" style="color:var(--accent)">Selected work</p><h2>Recent projects</h2>
   <div class="mq" id="projects" data-k="p" data-per="5" tabindex="0" role="region" aria-label="Projects, scroll sideways"></div>
- <div class="arrows"><button type="button" data-t="projects" data-d="-1" aria-label="Scroll Projects left">&#8249;</button><button type="button" data-t="projects" data-d="1" aria-label="Scroll Projects right">&#8250;</button></div>
 </section>
 
 <section id="feedback" class="">
  <p class="eyebrow" style="color:var(--accent)">Testimonials</p><h2>Client feedback</h2>
   <div class="mq e" id="fbs" tabindex="0" role="region" aria-label="Client feedback, scroll sideways"></div>
- <div class="arrows"><button type="button" data-t="fbs" data-d="-1" aria-label="Scroll Client feedback left">&#8249;</button><button type="button" data-t="fbs" data-d="1" aria-label="Scroll Client feedback right">&#8250;</button></div>
 </section>
 
 <section id="social" class="">
@@ -388,7 +380,6 @@ var io=('IntersectionObserver' in window)?new IntersectionObserver(function(es){
 function rvObs(){document.querySelectorAll('section,.card').forEach(function(n,i){if(n.classList.contains('rv'))return;n.classList.add('rv');if(io)io.observe(n);else n.classList.add('in')})}
 function selMail(){var r=document.createRange();r.selectNodeContents(document.querySelector('.mail span'));var s=window.getSelection();s.removeAllRanges();s.addRange(r);msg('Press copy to copy the email');setTimeout(function(){msg('')},3000)}
 $('cp').onclick=function(){var a='minodnimsara@icloud.com',ok=function(){msg('Email copied');setTimeout(function(){msg('')},2000)};try{navigator.clipboard.writeText(a).then(ok,selMail)}catch(e){selMail()}};
-document.querySelectorAll('.arrows button').forEach(function(b){b.onclick=function(){var box=$(b.dataset.t);box.scrollBy({left:(+b.dataset.d)*Math.max(280,box.clientWidth*.8),behavior:'smooth'})}});
 ['projects','fbs'].forEach(function(id){var box=$(id),sx=0,sl=0,down=false,moved=false;
  box.addEventListener('pointerdown',function(e){if(e.pointerType!=='mouse'||e.button!==0||box.classList.contains('e'))return;down=true;moved=false;sx=e.clientX;sl=box.scrollLeft});
  window.addEventListener('pointermove',function(e){if(!down)return;var dx=e.clientX-sx;if(Math.abs(dx)>5){moved=true;box.classList.add('drag')}if(moved)box.scrollLeft=sl-dx});
