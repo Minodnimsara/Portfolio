@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-JcBqEks+LP/dqm7pewEFnwcCghekOkln5rL+vTVGZtc='; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src https://api.github.com; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Portfolio Admin</title>
@@ -44,9 +46,9 @@ code{background:#0d0d0d;border:1px solid var(--line);border-radius:6px;padding:1
  <div id="status" role="status">Connect to GitHub to start.</div>
 
  <section class="card" id="conn">
-  <div><h2>1. Connect</h2><p>You only need to do this once per browser. Your key stays in this browser and is sent only to GitHub.</p></div>
+  <div><h2>1. Connect</h2><p>Paste your token each time you open this page. It is kept only in this tab, is sent only to GitHub, and clears when you close the tab or after 15 idle minutes.</p></div>
   <ol class="steps">
-   <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → New fine-grained token</a>.</li>
+   <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">GitHub → New fine-grained token</a>.</li>
    <li>Set Expiration to the longest option, and Repository access to <b>Only select repositories</b>, then choose your portfolio repository.</li>
    <li>Under Permissions → Repository permissions, set <b>Contents</b> to <b>Read and write</b>. Generate the token and paste it below.</li>
   </ol>
@@ -59,6 +61,7 @@ code{background:#0d0d0d;border:1px solid var(--line);border-radius:6px;padding:1
  </section>
 
  <div id="app" hidden style="display:grid;gap:22px">
+  <div><button class="ghost" id="lk" type="button">Lock admin</button></div>
   <section class="card">
    <div><h2>2. Add a project video or image</h2><p>Videos up to about 90 MB. Keep them short for fast loading.</p></div>
    <div class="row">
@@ -95,14 +98,19 @@ code{background:#0d0d0d;border:1px solid var(--line);border-radius:6px;padding:1
  </div>
 </main>
 <script>
+if(top!==self){document.documentElement.style.display='none';try{top.location.replace(location.href)}catch(e){}}
 (function(){
 var $=function(i){return document.getElementById(i)};
 var tok='',own='',rep='',busy=false,DATA=null;
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return ''}}
+function ss(k,v){try{if(v===undefined)return sessionStorage.getItem(k)||'';if(v===null)sessionStorage.removeItem(k);else sessionStorage.setItem(k,v)}catch(e){return ''}}
+ls('pa_tok',null); // older versions kept the token here: remove it
+var SAFE=/^(assets\/)?[A-Za-z0-9][A-Za-z0-9_-]*(\.[A-Za-z0-9_-]+)*\.(mp4|m4v|webm|mov|jpe?g|png|webp|gif)$/i;
+var TYPES={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif','video/mp4':'mp4','video/webm':'webm','video/quicktime':'mov','video/x-m4v':'m4v'};
 function say(t,c){var s=$('status');s.textContent=t;s.className=c||''}
 // guess owner/repo from the github.io address
 (function(){var h=location.hostname,m=h.match(/^([^.]+)\.github\.io$/);if(m){$('own').value=m[1];var seg=location.pathname.split('/').filter(Boolean)[0];$('rep').value=(seg&&seg.indexOf('.')<0)?seg:m[1]+'.github.io'}
- if(ls('pa_own'))$('own').value=ls('pa_own');if(ls('pa_rep'))$('rep').value=ls('pa_rep');if(ls('pa_tok'))$('tok').value=ls('pa_tok')})();
+ if(ls('pa_own'))$('own').value=ls('pa_own');if(ls('pa_rep'))$('rep').value=ls('pa_rep');if(ss('pa_tok'))$('tok').value=ss('pa_tok')})();
 async function gh(method,path,body){
  var r=await fetch('https://api.github.com'+path,{method:method,headers:Object.assign({'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},body?{'Content-Type':'application/json'}:{}),body:body?JSON.stringify(body):undefined});
  var t=await r.text(),j={};try{j=JSON.parse(t)}catch(e){}
@@ -113,9 +121,20 @@ function b64file(f){return new Promise(function(ok,no){var fr=new FileReader();f
 function b64text(s){return btoa(unescape(encodeURIComponent(s)))}
 function fromB64(s){var b=atob(s.replace(/\n/g,'')),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return new TextDecoder().decode(u)}
 function ratio(f){return new Promise(function(ok){var u=URL.createObjectURL(f),v=f.type.indexOf('video')===0,m=document.createElement(v?'video':'img');var done=function(w,h){URL.revokeObjectURL(u);ok(w&&h?Math.round(w/h*1000)/1000:0)};if(v){m.preload='metadata';m.onloadedmetadata=function(){done(m.videoWidth,m.videoHeight)}}else m.onload=function(){done(m.naturalWidth,m.naturalHeight)};m.onerror=function(){done(0,0)};m.src=u;setTimeout(function(){done(0,0)},8000)})}
-function newName(f){var e=(f.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'bin';return 'assets/'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.'+e}
+function newName(f){var r=new Uint32Array(2);crypto.getRandomValues(r);return 'assets/'+Date.now().toString(36)+r[0].toString(36)+r[1].toString(36)+'.'+TYPES[f.type]}
+// the file's first bytes must match its type, so a renamed page or script cannot be uploaded
+async function realType(f){var b=new Uint8Array(await f.slice(0,16).arrayBuffer()),h=function(a,o){o=o||0;return a.every(function(x,i){return b[o+i]===x})},t=f.type;
+ if(t==='image/jpeg')return h([255,216,255]);if(t==='image/png')return h([137,80,78,71]);if(t==='image/gif')return h([71,73,70,56]);
+ if(t==='image/webp')return h([82,73,70,70])&&h([87,69,66,80],8);if(t==='video/webm')return h([26,69,223,163]);
+ return h([102,116,121,112],4)}
+// redraw JPEG photos so hidden data such as GPS location is not published
+function clearPhoto(f){if(f.type!=='image/jpeg')return Promise.resolve(f);return new Promise(function(ok,no){var u=URL.createObjectURL(f),m=new Image();
+ m.onload=function(){var c=document.createElement('canvas');c.width=m.naturalWidth;c.height=m.naturalHeight;c.getContext('2d').drawImage(m,0,0);URL.revokeObjectURL(u);c.toBlob(function(b){b?ok(new File([b],'photo.jpg',{type:'image/jpeg'})):no(new Error('Could not prepare the image'))},'image/jpeg',.93)};
+ m.onerror=function(){URL.revokeObjectURL(u);no(new Error('Could not read the image'))};m.src=u})}
 async function putFile(file){
  if(file.size>90*1024*1024)throw new Error('"'+file.name+'" is over 90 MB. Compress it first.');
+ if(!TYPES[file.type]||!await realType(file))throw new Error('"'+file.name+'" is not allowed. Use MP4, WEBM, MOV, JPG, PNG, WEBP or GIF.');
+ file=await clearPhoto(file);
  var name=newName(file);
  await gh('PUT',P(name),{message:'Add '+name,content:await b64file(file)});
  return name}
@@ -125,10 +144,10 @@ async function update(msg,mutate){
   var c=await loadContent();mutate(c.data);
   try{await gh('PUT',P('content.json'),{message:msg,content:b64text(JSON.stringify(c.data,null,1)),sha:c.sha});DATA=c.data;return}
   catch(e){if(t<2&&(e.status===409||e.status===422))continue;throw e}}}
-async function delFile(path){try{var j=await gh('GET',P(path));await gh('DELETE',P(path),{message:'Remove '+path,sha:j.sha})}catch(e){}}
+async function delFile(path){if(!SAFE.test(path))return;try{var j=await gh('GET',P(path));await gh('DELETE',P(path),{message:'Remove '+path,sha:j.sha})}catch(e){}}
 function item(kind,x,i){
  var d=document.createElement('div');d.className='it';
- var vid=kind==='p'&&x.type==='video',th=document.createElement(vid?'video':'img');th.className='th';th.src=x.file;if(vid){th.muted=true;th.preload='metadata'}th.onerror=function(){th.style.visibility='hidden'};
+ var vid=kind==='p'&&x.type==='video',th=document.createElement(vid?'video':'img');th.className='th';if(SAFE.test(x.file))th.src=x.file;if(vid){th.muted=true;th.preload='metadata'}th.onerror=function(){th.style.visibility='hidden'};
  var w=document.createElement('div'),b=document.createElement('b'),s=document.createElement('small');
  b.textContent=kind==='p'?x.title:(x.name||'Client feedback');s.textContent=(kind==='p'?(x.tag||'Project')+' · ':'')+x.file;w.appendChild(b);w.appendChild(s);
  var bt=document.createElement('button');bt.className='del';bt.type='button';bt.textContent='Delete';
@@ -148,23 +167,29 @@ async function run(start,fn,done){
  catch(e){say(friendly(e),'bad')}
  finally{busy=false;document.querySelectorAll('button').forEach(function(b){b.disabled=false})}}
 function friendly(e){
- if(e.status===401)return 'GitHub rejected the token. Check that you pasted all of it and that it has not expired.';
+ if(e.status===401){ss('pa_tok',null);return 'GitHub rejected the token. Check that you pasted all of it and that it has not expired.'}
  if(e.status===403||e.status===404)return 'GitHub says no access ('+e.message+'). Check the username, repository name, and that the token has Contents: Read and write for this repository.';
  return e.message||'Something went wrong.'}
+var idle;function wake(){clearTimeout(idle);if(tok)idle=setTimeout(lock,9e5)}
+function lock(){if(busy){wake();return}clearTimeout(idle);tok='';DATA=null;ss('pa_tok',null);$('tok').value='';$('app').hidden=true;$('conn').hidden=false;say('Locked. Paste your token to continue.')}
+['pointerdown','keydown'].forEach(function(e){document.addEventListener(e,wake,{passive:true})});
+$('lk').onclick=lock;
 $('go').onclick=function(){
  own=$('own').value.trim();rep=$('rep').value.trim();tok=$('tok').value.trim();
  if(!own||!rep||!tok){say('Fill in the username, repository and token.','bad');return}
+ if(!/^[A-Za-z0-9-]{1,39}$/.test(own)||!/^[A-Za-z0-9._-]{1,100}$/.test(rep)){say('Check the username and repository name.','bad');return}
+ if(!/^github_pat_[A-Za-z0-9_]+$/.test(tok)){say('Use a fine-grained token (it starts with github_pat_). Classic tokens can reach your whole account.','bad');return}
  run('Connecting...',async function(){
   await gh('GET','/repos/'+own+'/'+rep);
   var c=await loadContent();DATA=c.data;
-  ls('pa_own',own);ls('pa_rep',rep);ls('pa_tok',tok);
+  ls('pa_own',own);ls('pa_rep',rep);ss('pa_tok',tok);wake();
   $('conn').hidden=true;$('app').hidden=false},'Connected. You can add or remove items now.')};
 $('pa').onclick=function(){
  var f=$('pf').files[0],t=$('pt').value.trim();
  if(!f||!t){say('Add a title and choose a file.','bad');return}
  run('Uploading '+f.name+'... large videos can take a minute.',async function(){
   var r=await ratio(f),name=await putFile(f),vid=f.type.indexOf('video')===0;
-  await update('Add project '+t,function(D){D.projects.unshift({file:name,r:r,title:t,tag:$('pg').value.trim(),type:vid?'video':'image'})});
+  await update('Add project '+t,function(D){D.projects.unshift({file:name,r:r,title:t.slice(0,140),tag:$('pg').value.trim().slice(0,140),type:vid?'video':'image'})});
   $('pt').value='';$('pg').value='';$('pf').value=''},'Added. The live site updates in 1 to 2 minutes, then refresh it.')};
 $('fa').onclick=function(){
  var fs=Array.prototype.slice.call($('ff').files);

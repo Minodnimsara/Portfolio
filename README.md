@@ -4,6 +4,7 @@ Portfolio website. Plain HTML, CSS and JavaScript, no build step.
 
 - `index.html` is the whole page
 - `assets/` holds the profile photo, project videos and client feedback screenshots
+- `posters/` holds a still image for each project video, named after the video file. A new video without a still shows its own first frame instead
 - `.nojekyll` tells GitHub Pages to serve the files as they are
 
 ## Publish on GitHub Pages (free)
@@ -20,7 +21,7 @@ Every path in the site is relative, so it works at either address.
 Open `/admin.html` on your live site (for example `https://YOURUSERNAME.github.io/admin.html`).
 
 1. Create a fine-grained token at https://github.com/settings/personal-access-tokens/new. Choose only this repository, and set Repository permissions → Contents to Read and write.
-2. Paste the token into the admin page once and press Connect.
+2. Paste the token into the admin page and press Connect. Do this each time: the token is kept only in that tab and clears when you close it or after 15 idle minutes.
 3. Add projects and screenshots, or delete old ones. Each change is saved to the repository, and the live site updates in one to two minutes.
 
 The admin page does nothing without your token, so visitors cannot change the site.
