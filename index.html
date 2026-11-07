@@ -650,14 +650,14 @@ function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null
 
 /* media paths: uploaded files live in assets/, older entries are bare names */
 function U(f){return !f?'':f.indexOf('/')<0?'assets/'+f:f}
-function P(f){return 'assets/posters/'+f.split('/').pop().replace(/\.\w+$/,'')+'.jpg'}
-function src(m,f){m.src=U(f);if(f.indexOf('/')<0)m.addEventListener('error',function h(){m.removeEventListener('error',h);m.src=f})}
+function P(f){return 'posters/'+f.split('/').pop().replace(/\.\w+$/,'')+'.jpg'}
+function src(m,f,t){t=t||'';m.src=U(f)+t;if(f.indexOf('/')<0)m.addEventListener('error',function h(){m.removeEventListener('error',h);m.src=f+t})}
 function ratio(p){return p.r||1.778}
 /* a still for a project: poster image, or the video's own first frame if it has no poster yet */
 function still(p){
  if(p.type!=='video'){var i=el('img');i.alt='';i.loading='lazy';src(i,p.file);return i}
  var im=el('img');im.alt='';im.src=P(p.file);
- im.onerror=function(){var v=el('video');v.muted=true;v.playsInline=true;v.preload='metadata';v.src=U(p.file)+'#t=1';if(im.parentNode)im.parentNode.replaceChild(v,im)};
+ im.onerror=function(){var v=el('video');v.muted=true;v.playsInline=true;v.preload='metadata';src(v,p.file,'#t=1');if(im.parentNode)im.parentNode.replaceChild(v,im)};
  return im}
 
 /* ---------- reveal ---------- */
