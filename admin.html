@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-JcBqEks+LP/dqm7pewEFnwcCghekOkln5rL+vTVGZtc='; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src https://api.github.com; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2BXzeeJhZbaQHxyfCBXu/frl/YP4Z8GahhO4PQnnLek='; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src https://api.github.com; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
@@ -19,7 +19,7 @@ p{margin:0;color:var(--mute)}
 a{color:var(--text)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;gap:14px}
 label{display:grid;gap:6px;font-size:13px;color:var(--mute)}
-input[type=text],input[type=password]{background:#0d0d0d;border:1px solid var(--line);color:var(--text);padding:11px 13px;border-radius:10px;font:inherit;min-width:0;width:100%}
+input[type=text],input[type=password],select{background:#0d0d0d;border:1px solid var(--line);color:var(--text);padding:11px 13px;border-radius:10px;font:inherit;min-width:0;width:100%}
 input[type=file]{color:var(--mute);font-size:13px;max-width:100%}
 input:focus-visible,button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
@@ -36,6 +36,8 @@ button:disabled{opacity:.5;cursor:wait}
 .steps{margin:0;padding-left:20px;color:var(--mute)}
 .steps li{margin:4px 0}
 code{background:#0d0d0d;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}
+select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:38px;background-image:linear-gradient(45deg,transparent 50%,#9a9a9a 50%),linear-gradient(135deg,#9a9a9a 50%,transparent 50%);background-position:calc(100% - 20px) 52%,calc(100% - 15px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+select option{background:#161616;color:#f5f5f5}
 [hidden]{display:none!important}
 @media(max-width:520px){.it{grid-template-columns:72px 1fr}.it .th{width:72px;height:54px}.it button{grid-column:1/-1}}
 </style>
@@ -66,8 +68,9 @@ code{background:#0d0d0d;border:1px solid var(--line);border-radius:6px;padding:1
    <div><h2>2. Add a project video or image</h2><p>Videos up to about 90 MB. Keep them short for fast loading.</p></div>
    <div class="row">
     <label>Title<input type="text" id="pt" placeholder="Project title"></label>
-    <label>Category<input type="text" id="pg" placeholder="e.g. Promo, Logo Animation"></label>
+    <label>Category<select id="pg"><option value="">Choose a category</option></select></label>
    </div>
+   <label id="pnw" hidden>New category name<input type="text" id="pgn" maxlength="40" placeholder="e.g. Logo Animation"></label>
    <label>File<input type="file" id="pf" accept="video/*,image/*"></label>
    <button id="pa">Add project</button>
   </section>
@@ -154,8 +157,18 @@ function item(kind,x,i){
  bt.onclick=function(){if(bt.dataset.sure!=='1'){bt.dataset.sure='1';bt.textContent='Tap again to confirm';setTimeout(function(){bt.dataset.sure='';bt.textContent='Delete'},4000);return}
   run('Deleting...',async function(){await update('Remove item',function(D){var L=kind==='p'?D.projects:D.feedback,k=L.findIndex(function(y){return y.file===x.file});if(k>=0)L.splice(k,1)});await delFile(x.file)},'Deleted. The live site updates in 1 to 2 minutes.')};
  d.appendChild(th);d.appendChild(w);d.appendChild(bt);return d}
+function catLabel(t){var s=String(t||'').replace(/\s+/g,' ').trim().replace(/\s*style video$/i,'').replace(/\s+video$/i,'');return s?s.charAt(0).toUpperCase()+s.slice(1).toLowerCase():''}
+// categories already on the site, one entry each, however they were typed before
+function cats(D){var seen={},out=[];D.projects.forEach(function(p){var l=catLabel(p.tag),k=l.toLowerCase();if(l&&!seen[k]){seen[k]=1;out.push(l)}});return out.sort()}
+var prefer='';
+function fillCats(){var sel=$('pg'),keep=prefer||sel.value;prefer='';sel.textContent='';
+ var add=function(v,t){var o=document.createElement('option');o.value=v;o.textContent=t;sel.appendChild(o)};
+ add('','Choose a category');cats(DATA).forEach(function(c){add(c,c)});add('__new','+ New category');
+ sel.value=[].some.call(sel.options,function(o){return o.value===keep})?keep:'';$('pnw').hidden=sel.value!=='__new'}
+$('pg').onchange=function(){$('pnw').hidden=this.value!=='__new';if(this.value==='__new')$('pgn').focus()};
 function list(){
  if(!DATA)return;
+ fillCats();
  [['lp',DATA.projects,'p'],['lf',DATA.feedback,'f']].forEach(function(a){var box=$(a[0]);box.textContent='';
   if(!a[1].length){var e=document.createElement('p');e.textContent='Nothing here yet.';box.appendChild(e)}
   a[1].forEach(function(x,i){box.appendChild(item(a[2],x,i))})});
@@ -185,12 +198,15 @@ $('go').onclick=function(){
   ls('pa_own',own);ls('pa_rep',rep);ss('pa_tok',tok);wake();
   $('conn').hidden=true;$('app').hidden=false},'Connected. You can add or remove items now.')};
 $('pa').onclick=function(){
- var f=$('pf').files[0],t=$('pt').value.trim();
+ var f=$('pf').files[0],t=$('pt').value.trim(),pick=$('pg').value,typed=catLabel($('pgn').value).slice(0,40);
  if(!f||!t){say('Add a title and choose a file.','bad');return}
+ if(!pick){say('Choose a category, or pick + New category.','bad');return}
+ if(pick==='__new'&&!typed){say('Type a name for the new category.','bad');return}
+ if(pick==='__new'){var same=cats(DATA).filter(function(c){return c.toLowerCase()===typed.toLowerCase()})[0];if(same){pick=same;$('pg').value=same;$('pnw').hidden=true}}
  run('Uploading '+f.name+'... large videos can take a minute.',async function(){
   var r=await ratio(f),name=await putFile(f),vid=f.type.indexOf('video')===0;
-  await update('Add project '+t,function(D){D.projects.unshift({file:name,r:r,title:t.slice(0,140),tag:$('pg').value.trim().slice(0,140),type:vid?'video':'image'})});
-  $('pt').value='';$('pg').value='';$('pf').value=''},'Added. The live site updates in 1 to 2 minutes, then refresh it.')};
+  await update('Add project '+t,function(D){D.projects.unshift({file:name,r:r,title:t.slice(0,140),tag:(prefer=(pick==='__new'?(cats(D).filter(function(c){return c.toLowerCase()===typed.toLowerCase()})[0]||typed):pick)),type:vid?'video':'image'})});
+  $('pt').value='';$('pgn').value='';$('pf').value=''},'Added. The live site updates in 1 to 2 minutes, then refresh it.')};
 $('fa').onclick=function(){
  var fs=Array.prototype.slice.call($('ff').files);
  if(!fs.length){say('Choose one or more screenshots first.','bad');return}

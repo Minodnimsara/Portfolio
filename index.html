@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-3HYZbBo58gfYKKt96/8oz1CT/39QqmnCugHDvb3ofrc=' 'sha256-fnepo7WU9XrfU2gVpEdj9B5CGoOnH3jBSJGZADrgE7A='; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-3HYZbBo58gfYKKt96/8oz1CT/39QqmnCugHDvb3ofrc=' 'sha256-jeVrHiurfGo4q/hlvhdZAMWPtsuxr9yBwBwegbjRBqs='; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Minod Nimsara — Motion &amp; Graphic Design</title>
@@ -749,8 +749,9 @@ runIn.bf=function(n){setTimeout(function(){n.classList.add('done')},1400)};
 
 /* ---------- work: justified rows, re-flowed with motion ---------- */
 var filter='all',tiles=[];
-function keyOf(p){return (p.tag||'Project').toLowerCase().trim()}
-function short(t){var s=t.replace(/\s*style video$/i,'').replace(/\s+video$/i,'');return s.charAt(0).toUpperCase()+s.slice(1).toLowerCase()}
+function catLabel(t){var s=String(t||'').replace(/\s+/g,' ').trim().replace(/\s*style video$/i,'').replace(/\s+video$/i,'');return s?s.charAt(0).toUpperCase()+s.slice(1).toLowerCase():''}
+function short(t){return catLabel(t)||'Project'}
+function keyOf(p){return short(p.tag).toLowerCase()}
 function buildSeg(){
  var seg=$('seg'),seen={},list=[{k:'all',t:'All'}];qa('button',seg).forEach(function(b){b.remove()});
  D.projects.forEach(function(p){var k=keyOf(p);if(!seen[k]){seen[k]=1;list.push({k:k,t:short(p.tag||'Project')})}});
